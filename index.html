@@ -217,7 +217,8 @@ textDiv.innerHTML = renderMessageText(msg.message);
     }
   }
 
-  fetch('https://github.com/LuisitoTypes/Old-Chat-Reader/blob/3cdf15f997db69b0a4ec545be13a3d74e8c99311/ilan_chat_folder/_chat.txt')
+  fetch('https://raw.githubusercontent.com/LuisitoTypes/Old-Chat-Reader/main/ilan_chat_folder/_chat.txt
+')
     .then(res => {
       if (!res.ok) throw new Error('chat.txt not found orBOOBS failed to load');
       return res.text();

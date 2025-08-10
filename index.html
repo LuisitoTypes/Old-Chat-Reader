@@ -60,47 +60,33 @@
 </style>
 </head>
 <body>
-<div id="chat-container"></div>
+<div id="chat-container">Loading chat...</div>
 
 <script>
-  // Helper: format date to readable string e.g. Thursday, Jan 1, 2020
   function formatDate(date) {
     const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
     return date.toLocaleDateString(undefined, options);
   }
 
-  // Parse WhatsApp chat text to structured data grouped by day
   function parseChat(text) {
-    // Each line format:
-    // [MM/DD/YY, HH:MM:SS AM/PM] Sender: message
-    // or
-    // [M/D/YY, H:MM AM/PM] Sender: message
-    // We parse date, time, sender, message
-
     const lines = text.split('\n');
     const chatByDate = {};
-
-    const lineRegex = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}), (\d{1,2}:\d{2}(:\d{2})? ?[AP]M?)\] ([^:]+): (.*)$/;
+    const lineRegex = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}), (\d{1,2}:\d{2}(?::\d{2})? ?[AP]M?)\] ([^:]+): (.*)$/;
 
     for (const line of lines) {
       const match = lineRegex.exec(line);
       if (!match) continue;
 
-      let [_, dateStr, timeStr,, sender, message] = match;
+      let [_, dateStr, timeStr, sender, message] = match;
 
-      // Parse date string MM/DD/YY(YY)
       let [month, day, year] = dateStr.split('/');
       year = year.length === 2 ? '20' + year : year;
-      const fullDateStr = `${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
+      const fullDateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       const dateObj = new Date(fullDateStr);
+      if (isNaN(dateObj)) continue;
 
-      if (isNaN(dateObj)) continue; // skip invalid dates
-
-      const dateKey = fullDateStr; // group key: yyyy-mm-dd
-
-      // Save message under that date
-      if (!chatByDate[dateKey]) chatByDate[dateKey] = [];
-      chatByDate[dateKey].push({
+      if (!chatByDate[fullDateStr]) chatByDate[fullDateStr] = [];
+      chatByDate[fullDateStr].push({
         sender: sender.trim(),
         time: timeStr.trim(),
         message: message.trim(),
@@ -109,28 +95,23 @@
     return chatByDate;
   }
 
-  // Render chat to HTML
   function renderChat(chatByDate) {
     const container = document.getElementById('chat-container');
     container.innerHTML = '';
 
-    // Sort dates ascending
     const sortedDates = Object.keys(chatByDate).sort();
 
     for (const dateKey of sortedDates) {
-      // Date header
       const date = new Date(dateKey);
       const header = document.createElement('div');
       header.className = 'date-header';
       header.textContent = formatDate(date);
       container.appendChild(header);
 
-      // Messages for that date
       const messages = chatByDate[dateKey];
       for (const msg of messages) {
         const messageContainer = document.createElement('div');
-        // Align right if sender is 'Luis Colon' (you can adjust as needed)
-        const isRight = msg.sender === 'Luis Colon';
+        const isRight = msg.sender === 'Luis Colon';  // Adjust sender name as needed
         messageContainer.className = 'message-container ' + (isRight ? 'right' : 'left');
 
         const messageDiv = document.createElement('div');
@@ -153,7 +134,6 @@
     }
   }
 
-  // Load chat.txt from same folder and render it
   fetch('chat.txt')
     .then(res => {
       if (!res.ok) throw new Error('chat.txt not found or failed to load');

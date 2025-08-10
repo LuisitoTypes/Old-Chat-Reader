@@ -153,10 +153,10 @@
     }
   }
 
-  // Load ilan_chat.txt from same folder and render it
-  fetch('ilan_chat.txt')
+  // Load chat.txt from same folder and render it
+  fetch('chat.txt')
     .then(res => {
-      if (!res.ok) throw new Error('ilan_chat.txt not found or failed to load');
+      if (!res.ok) throw new Error('chat.txt not found or failed to load');
       return res.text();
     })
     .then(text => {
@@ -165,7 +165,7 @@
     })
     .catch(err => {
       const container = document.getElementById('chat-container');
-      container.textContent = 'Error loading ilan_chat.txt: ' + err.message;
+      container.textContent = 'Error loading chat.txt: ' + err.message;
     });
 </script>
 </body>

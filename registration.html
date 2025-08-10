@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat Registration</title>
+</head>
+<body>
+  <h2>Enter Password to Access Chat</h2>
+  <input type="password" id="passwordInput" placeholder="Password" />
+  <button onclick="checkPassword()">Enter</button>
+
+  <p id="error" style="color:red;"></p>
+
+  <script>
+    const passwordToPage = {
+      'pass123': 'index.html',
+      'secret': 'index_chat2.html',
+      'admin': 'index_admin.html'
+    };
+
+    function checkPassword() {
+      const pass = document.getElementById('passwordInput').value.trim();
+      const page = passwordToPage[pass];
+      const errorElem = document.getElementById('error');
+
+      if (page) {
+        window.location.href = page;
+      } else {
+        errorElem.textContent = 'Incorrect password.';
+      }
+    }
+  </script>
+</body>
+</html>

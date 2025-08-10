@@ -197,6 +197,17 @@ function renderMessageText(text) {
     const url = `ilan_chat_folder/${text.trim()}`;
     return `<img src="${url}" alt="Image" style="max-width:200px; border-radius:8px;" />`;
   }
+
+  if (/\.(mp4)$/i.test(text.trim())) {
+    const url = `ilan_chat_folder/${text.trim()}`;
+    return `
+      <video controls width="320" height="240" style="border-radius:8px;">
+        <source src="${url}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    `;
+  }
+
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

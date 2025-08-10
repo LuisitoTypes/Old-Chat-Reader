@@ -219,7 +219,7 @@ textDiv.innerHTML = renderMessageText(msg.message);
 
   fetch('ilan_chat_folder/_chat.txt')
     .then(res => {
-      if (!res.ok) throw new Error('chat.txt not found or failed to load');
+      if (!res.ok) throw new Error('chat.txt not found orBOOBS failed to load');
       return res.text();
     })
     .then(text => {
@@ -228,7 +228,7 @@ textDiv.innerHTML = renderMessageText(msg.message);
     })
     .catch(err => {
       const container = document.getElementById('chat-container');
-      container.textContent = 'Error loading chat.txt: ' + err.message;
+      container.textContent = 'BOOBS loading chat.txt: ' + err.message;
     });
 </script>
 </body>

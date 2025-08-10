@@ -11,15 +11,23 @@
   <p id="error" style="color:red;"></p>
 
   <script>
-    const passwordToPage = {
-      'ILAN': 'index.html',
-      'SOFIA': 'el_indice.html',
-      'SAMADHI': 'index_admin.html'
-    };
+    let passwordMap = {};
+
+    fetch('passwords.json')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load passwords');
+        return res.json();
+      })
+      .then(data => {
+        passwordMap = data;
+      })
+      .catch(() => {
+        document.getElementById('error').textContent = 'Error loading passwords file.';
+      });
 
     function checkPassword() {
       const pass = document.getElementById('passwordInput').value.trim();
-      const page = passwordToPage[pass];
+      const page = passwordMap[pass];
       const errorElem = document.getElementById('error');
 
       if (page) {

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WhatsApp Chat Reader</title>
+<style>
+body {
+  margin: 0;
+  background-color: #121b22; /* WhatsApp dark background */
+  color: #e1e1e1;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.4;
+  padding: 16px;
+}
+
+.date-header {
+  text-align: center;
+  margin: 20px 0 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #9ea6ad;
+  user-select: none;
+  letter-spacing: 0.03em;
+}
+
+.message-container {
+  display: flex;
+  margin-bottom: 8px;
+  max-width: 75%;
+}
+
+.message-container.left {
+  justify-content: flex-start;
+}
+
+.message-container.right {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+.message-header {
+  font-size: 0.7rem;
+  color: #9ea6ad;
+  user-select: text;
+  margin-bottom: 3px;
+}
+
+.message-text {
+  background-color: #202c33; /* Left bubble color */
+  padding: 8px 12px;
+  border-radius: 7.5px;
+  color: #dcf8c6;
+  font-size: 0.9rem;
+  word-break: break-word;
+  user-select: text;
+  box-shadow:
+    inset 0 1px 0 #2a3a3e,
+    0 1px 0 rgba(0,0,0,0.06);
+}
+
+.message-container.right .message-text {
+  background-color: #056162; /* WhatsApp blue bubble */
+  color: white;
+  box-shadow: none;
+  border-bottom-right-radius: 0;
+}
+
+.message-container.left .message-text {
+  border-bottom-left-radius: 0;
+}
+
+#debug-log {
+  display: none; /* Hide debug in clean view */
+}
+
+</style>
+</head>
+<body>
+<div id="chat-container">Loading chat...</div>
+<div id="debug-log"></div>
+
+<script>
+  function formatDate(date) {
+    const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+    return date.toLocaleDateString(undefined, options);
+  }
+
+  function logDebug(msg) {
+    const log = document.getElementById('debug-log');
+    log.textContent += msg + '\n';
+  }
+
+  function parseChat(text) {
+    const lines = text.split('\n');
+    const chatByDate = {};
+
+    // Handles formats like:
+    // [12/1/20, 9:15:49 AM] Sender: message
+    // with AM/PM variants like am, a.m., PM, p.m., etc.
+    const lineRegex = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}), (\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp]\.?[Mm]\.?)\] ([^:]+): (.*)$/;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      const match = lineRegex.exec(line);
+      if (!match) {
+        logDebug(`Line ${i + 1} skipped (no match): ${line}`);
+        continue;
+      }
+
+      let [, dateStr, timeStr, ampmRaw, sender, message] = match;
+
+      // Normalize AM/PM to uppercase without dots
+      let ampm = ampmRaw.replace(/\./g, '').toUpperCase();
+      const time = timeStr + ' ' + ampm;
+
+      let [m, d, y] = dateStr.split('/');
+y = y.length === 2 ? '20' + y : y;
+const fullDateStr = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+const [yearNum, monthNum, dayNum] = fullDateStr.split('-').map(Number);
+const dateObj = new Date(yearNum, monthNum - 1, dayNum);
+
+
+
+      if (isNaN(dateObj)) {
+        logDebug(`Line ${i + 1} skipped (invalid date): ${dateStr}`);
+        continue;
+      }
+
+      if (!chatByDate[fullDateStr]) chatByDate[fullDateStr] = [];
+      chatByDate[fullDateStr].push({
+        sender: sender.trim(),
+        time: time.trim(),
+        message: message.trim(),
+      });
+
+      logDebug(`Line ${i + 1} parsed: ${sender} @ ${time} - "${message.substring(0, 30)}..."`);
+    }
+
+    return chatByDate;
+  }
+
+  function renderChat(chatByDate) {
+    const container = document.getElementById('chat-container');
+    container.innerHTML = '';
+
+    const sortedDates = Object.keys(chatByDate).sort();
+
+    for (const dateKey of sortedDates) {
+      const date = new Date(dateKey);
+      const header = document.createElement('div');
+      header.className = 'date-header';
+      header.textContent = formatDate(date);
+      container.appendChild(header);
+
+      const messages = chatByDate[dateKey];
+      for (const msg of messages) {
+        const messageContainer = document.createElement('div');
+        const isRight = msg.sender === 'Luis Colon';
+        messageContainer.className = 'message-container ' + (isRight ? 'right' : 'left');
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message';
+
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'message-header';
+        headerDiv.textContent = `${msg.sender} • ${msg.time}`;
+
+        const textDiv = document.createElement('div');
+textDiv.className = 'message-text';
+
+// Helper to safely render message text or images/stickers
+function renderMessageText(text) {
+  // Check for WhatsApp attached image format
+  const attachedMatch = text.match(/^<attached:\s*(.+)>$/i);
+  if (attachedMatch) {
+    const filename = attachedMatch[1].trim();
+    const url = `ilan_chat_folder/${filename}`;
+    return `<img src="${url}" alt="Attached Image" style="max-width:200px; border-radius:8px;" />`;
+  }
+
+  if (/^<image omitted>$/i.test(text)) {
+    return '<em>[Image]</em>';
+  }
+  if (/^<sticker omitted>$/i.test(text)) {
+    return '<em>[Sticker]</em>';
+  }
+  if (/\.(jpg|jpeg|png|gif|webp)$/i.test(text.trim())) {
+    const url = `ilan_chat_folder/${text.trim()}`;
+    return `<img src="${url}" alt="Image" style="max-width:200px; border-radius:8px;" />`;
+  }
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+
+
+textDiv.innerHTML = renderMessageText(msg.message);
+
+
+        messageDiv.appendChild(headerDiv);
+        messageDiv.appendChild(textDiv);
+        messageContainer.appendChild(messageDiv);
+
+        container.appendChild(messageContainer);
+      }
+    }
+  }
+
+  fetch('ilan_chat_folder/_chat.txt')
+    .then(res => {
+      if (!res.ok) throw new Error('chat.txt not found or failed to load');
+      return res.text();
+    })
+    .then(text => {
+      const chatByDate = parseChat(text);
+      renderChat(chatByDate);
+    })
+    .catch(err => {
+      const container = document.getElementById('chat-container');
+      container.textContent = 'Error loading chat.txt: ' + err.message;
+    });
+</script>
+</body>
+</html>

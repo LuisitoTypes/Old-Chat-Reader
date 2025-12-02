@@ -165,7 +165,7 @@ const dateObj = new Date(yearNum, monthNum - 1, dayNum);
       const messages = chatByDate[dateKey];
       for (const msg of messages) {
         const messageContainer = document.createElement('div');
-        const isRight = msg.sender === 'Luis Colon';
+        const isRight = msg.sender === 'Mike';
         messageContainer.className = 'message-container ' + (isRight ? 'right' : 'left');
 
         const messageDiv = document.createElement('div');
